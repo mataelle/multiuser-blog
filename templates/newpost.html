@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<form method="post">
+	<label> 
+		<div class="label">Sublect</div>
+		<input type="text" name="subject" value="{{subject}}">
+	</label><br>
+	<label>
+		<div class="label">Content</div>
+		<textarea name="content">{{content}}</textarea>
+	</label><br>
+	{% if err_msg %} <div class="err_msg">Both subject and content needed</div>{% endif %}
+	<input type="submit">
+</form>
+{% endblock %}
