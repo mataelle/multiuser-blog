@@ -1,0 +1,26 @@
+<style>
+.err_msg {
+	color:red;
+}
+.label {
+	width:120px;
+	display:inline-block;
+	text-align:right;
+	margin:4px;
+}
+</style>
+
+<h2> Signup </h2>
+
+<form method="post"> 
+	<label><div class="label">Username</div><input type="text" name="username" {% if username %}value="{{username}}"{% endif %}></label>
+	{% if err_username %} <span class="err_msg"> That's not a valid username. </span> {% endif %}<br>
+	{% if err_username_taken %} <span class="err_msg"> Username is already taken. </span> {% endif %}<br>
+	<label><div class="label">Password</div><input type="password" name="password"></label>
+	{% if err_password %} <span class="err_msg"> That wasn't a valid password. </span> {% endif %}<br>
+	<label><div class="label">Verify Password</div><input type="password" name="verify"></label>
+	{% if err_verify %} <span class="err_msg"> Your passwords didn't match. </span> {% endif %}<br>
+	<label><div class="label">Email (Optional)</div><input type="email" name="email" {% if email %}value="{{email}}"{% endif %}></label>
+	{% if err_email %} <span class="err_msg"> That's not a valid email. </span> {% endif %}<br>
+	<input type="submit">
+</form> 

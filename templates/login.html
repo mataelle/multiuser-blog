@@ -1,0 +1,20 @@
+<style>
+.err_msg {
+	color:red;
+}
+.label {
+	width:120px;
+	display:inline-block;
+	text-align:right;
+	margin:4px;
+}
+</style>
+
+<h2> Login </h2>
+
+<form method="post"> 
+	<label><div class="label">Username</div><input type="text" name="username" {% if username %}value="{{username}}"{% endif %}></label><br>
+	<label><div class="label">Password</div><input type="password" name="password"></label><br>
+	{% if error %} <span class="err_msg"> Not a valid login data. </span> {% endif %}<br>
+	<input type="submit">
+</form> 
