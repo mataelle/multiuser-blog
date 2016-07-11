@@ -47,6 +47,10 @@ class Handler(webapp2.RequestHandler):
     def render(self, template, **kw):
         self.response.write(self.render_str(template, **kw))
 
+    def set_cookie(self, name, value):
+        self.response.headers.add_header(
+            'Set-Cookie', '%s=%s; Path=/' % (name, value))
+
 
 # handler for front page
 class BlogFront(Handler):
@@ -142,8 +146,7 @@ class SignUpHandler(Handler):
             else:
                 user = User(username=username, password=password)
                 user.put()
-                self.response.headers.add_header(
-                    'Set-Cookie', 'username=%s; Path=/' % str(username))
+                self.set_cookie('username', str(username))
                 self.redirect('/blog')
 
 # handler for login form
@@ -168,8 +171,7 @@ class LoginHandler(Handler):
             self.render('login.html', error=True)
             return
 
-        self.response.headers.add_header(
-            'Set-Cookie', 'username=%s; Path=/' % str(username))
+        self.set_cookie('username', str(username))
         self.redirect('/blog')
 
 
@@ -177,8 +179,7 @@ class LoginHandler(Handler):
 class LogoutHandler(Handler):
 
     def get(self):
-        self.response.headers.add_header(
-            'Set-Cookie', 'username=%s; Path=/' % '')
+        self.set_cookie('username', '')
         self.redirect('/signup')
 
 app = webapp2.WSGIApplication([
