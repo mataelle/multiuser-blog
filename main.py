@@ -50,19 +50,38 @@ class Handler(webapp2.RequestHandler):
 class BlogFront(Handler):
 
     def get(self):
-        self.render('blog.html')
+        posts = Post.all().order('-created')[:10]
+        self.render('blog.html', posts = posts)
 
 
 class PostPage(Handler):
 
     def get(self, post_id):
-        self.render('post.html')
+        key = db.Key.from_path('Post', int(post_id))
+        post = db.get(key)
+
+        if not post:
+            self.error(404)
+            return
+
+        self.render('post.html', post=post)
 
 
 class NewPost(Handler):
 
     def get(self):
         self.render('newpost.html')
+
+    def post(self):
+        subject = self.request.get('subject')
+        content = self.request.get('content')
+        if subject and content :
+            post = Post(subject = subject, content = content)
+            post.put()
+            self.redirect(str(post.key().id()))
+        else:
+            self.render('newpost.html', content = content, subject = subject, err_msg = True)
+
 
 app = webapp2.WSGIApplication([
     ('/', BlogFront),
