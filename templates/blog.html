@@ -1,6 +1,10 @@
 {% extends 'base.html' %}
 {% block content %}
-	{% for post in posts %}
-        {{post.render(user) | safe}}
-	{% endfor %}
+    {% if posts %}
+    	{% for post in posts %}
+            {{post.render(user) | safe}}
+    	{% endfor %}
+    {% else %}
+        <h3>There is no posts yet. You can <a href="/signup">signup</a> or <a href="/login">login</a> and create some!</h3>
+    {% endif %}
 {% endblock %}

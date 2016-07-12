@@ -105,7 +105,7 @@ class Handler(webapp2.RequestHandler):
     def initialize(self, *a, **kw):
         webapp2.RequestHandler.initialize(self, *a, **kw)
         username = self.read_cookie('username')
-        if len(username) == 0:
+        if username and len(username) == 0:
             username = None
         self.user = username and User.get_by_username(username)
 
