@@ -24,6 +24,9 @@ jinja_env = jinja2.Environment(
 
 from google.appengine.ext import db
 
+def render_str(template, **params):
+    t = jinja_env.get_template(template)
+    return t.render(params)
 
 class Post(db.Model):
     subject = db.StringProperty(required=True)
@@ -31,17 +34,43 @@ class Post(db.Model):
     created = db.DateTimeProperty(auto_now_add=True)
     last_modified = db.DateTimeProperty(auto_now=True)
 
+    def render(self):
+        return render_str("post.html", post = self)
 
 class User(db.Model):
     username = db.StringProperty(required=True)
     password = db.StringProperty(required=True)
 
+    @classmethod
+    def get_by_username(cls, username):
+        u = cls.all().filter('username =', username).get()
+        return u
 
-# basic habdler class
+    @classmethod
+    def login(self, username, password):
+        if username is None or password is None:
+            return None
+        user = db.GqlQuery('select * from User where username=:1', username)
+        if user.count() == 0:
+            return None
+        user = user.get()
+        if user.password != password:
+            return None
+        return user
+
+
+# basic handler class
 class Handler(webapp2.RequestHandler):
+
+    def initialize(self, *a, **kw):
+        webapp2.RequestHandler.initialize(self, *a, **kw)
+        username = self.read_cookie('username')
+        self.user = username and User.get_by_username(username)
 
     def render_str(self, template, **params):
         t = jinja_env.get_template(template)
+        if self.user:
+            params['user'] = self.user
         return t.render(params)
 
     def render(self, template, **kw):
@@ -51,6 +80,17 @@ class Handler(webapp2.RequestHandler):
         self.response.headers.add_header(
             'Set-Cookie', '%s=%s; Path=/' % (name, value))
 
+    def read_cookie(self, name):
+        cookie_val = self.request.cookies.get(name)
+        return cookie_val
+
+    def set_user(self, user):
+        self.user=user
+        self.set_cookie('username', str(user.username))
+
+    def unset_user(self):
+        self.user=None
+        self.set_cookie('username', '')
 
 # handler for front page
 class BlogFront(Handler):
@@ -71,7 +111,7 @@ class PostPage(Handler):
             self.error(404)
             return
 
-        self.render('post.html', post=post)
+        self.render('post_permalink.html', post=post)
 
 
 # handler for new post form page
@@ -146,7 +186,7 @@ class SignUpHandler(Handler):
             else:
                 user = User(username=username, password=password)
                 user.put()
-                self.set_cookie('username', str(username))
+                self.set_user(user)
                 self.redirect('/blog')
 
 # handler for login form
@@ -159,28 +199,22 @@ class LoginHandler(Handler):
         username = self.request.get('username')
         password = self.request.get('password')
 
-        if username is None or password is None:
-            self.render('login.html', error=True)
-            return
-        user = db.GqlQuery('select * from User where username=:1', username)
-        if user.count() == 0:
-            self.render('login.html', error=True)
-            return
-        user = user.get()
-        if user.password != password:
+        user = User.login(username, password)
+        print(username, password)
+        print(user.username)
+        if user is None:
             self.render('login.html', error=True)
             return
 
-        self.set_cookie('username', str(username))
+        self.set_user(user)
         self.redirect('/blog')
-
 
 # handler for logout
 class LogoutHandler(Handler):
 
     def get(self):
-        self.set_cookie('username', '')
-        self.redirect('/signup')
+        self.unset_user()
+        self.redirect('/login')
 
 app = webapp2.WSGIApplication([
     ('/', BlogFront),
