@@ -139,12 +139,9 @@ class Handler(webapp2.RequestHandler):
 # handler for front page
 class BlogFront(Handler):
 
-    def get(self, username=''):
-        user = self.user
-        if len(username) > 0:
-            user = User.get_by_username(username)
+    def get(self):
         posts = Post.all().order('-created')[:10]
-        self.render('blog.html', posts=posts, user=user)
+        self.render('blog.html', posts=posts)
 
 
 # base handler for post-pages
@@ -303,7 +300,7 @@ class SignUpHandler(Handler):
                 user = User.register(username=username, password=password, email=email)
                 self.set_user(user)
                 user.put()
-                self.redirect('/blog', permanent=True)
+                self.render('page_welcome.html')
 
 # handler for login form
 class LoginHandler(Handler):
@@ -321,7 +318,7 @@ class LoginHandler(Handler):
             return
 
         self.set_user(user)
-        self.redirect('/blog', username=username, permanent=True)
+        self.redirect('/blog', username, permanent=True)
 
 # handler for logout
 class LogoutHandler(Handler):

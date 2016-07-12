@@ -7,28 +7,35 @@ html {
 }
 
 body {
-    min-width: 768px;
-    background-color: transparent !important;
-    padding-bottom: 20px;
+  min-width: 768px;
+  background-color: transparent !important;
+  padding-bottom: 20px;
+}
+
+textarea {
+  resize:none;
+  word-wrap:break-word;
+  width:100%;
+  min-height:200px;
 }
 
 .nav {
-    margin-bottom: 0 !important;
+  margin-bottom: 0 !important;
 }
 
 pre {
-    background-color: rgba(248,248,248,0.7) !important;
+  background-color: rgba(248,248,248,0.7) !important;
 }
 
 .container {
-    margin-top: 50px;
-    min-width: 750px;
+  margin-top: 50px;
+  min-width: 750px;
 }
 
 .post-heading {
-    margin-top: 20px;
+  margin-top: 20px;
 }
 
 .err_msg {
-    color:red;
+  color:red;
 }
