@@ -69,7 +69,7 @@ class User(db.Model):
 
     @classmethod
     def get_by_username(cls, username):
-        u = cls.all().filter('username =', username).get()
+        u = cls.all().filter('username =', str(username)).get()
         return u
 
     @classmethod
@@ -111,7 +111,6 @@ class Handler(webapp2.RequestHandler):
 
     def render_str(self, template, **params):
         t = jinja_env.get_template(template)
-        print("!!", self.user)
         if self.user:
             params['user'] = self.user
         return t.render(params)
@@ -140,9 +139,12 @@ class Handler(webapp2.RequestHandler):
 # handler for front page
 class BlogFront(Handler):
 
-    def get(self):
+    def get(self, username=''):
+        user = self.user
+        if len(username) > 0:
+            user = User.get_by_username(username)
         posts = Post.all().order('-created')[:10]
-        self.render('blog.html', posts=posts)
+        self.render('blog.html', posts=posts, user=user)
 
 
 # base handler for post-pages
@@ -299,9 +301,9 @@ class SignUpHandler(Handler):
                             err_username_taken=True)
             else:
                 user = User.register(username=username, password=password, email=email)
-                user.put()
                 self.set_user(user)
-                self.redirect('/blog')
+                user.put()
+                self.redirect('/blog', permanent=True)
 
 # handler for login form
 class LoginHandler(Handler):
@@ -314,14 +316,12 @@ class LoginHandler(Handler):
         password = self.request.get('password')
 
         user = User.login(username, password)
-        print(username, password)
-        print(user.username)
         if user is None:
             self.render('login.html', error=True)
             return
 
         self.set_user(user)
-        self.redirect('/blog')
+        self.redirect('/blog', username=username, permanent=True)
 
 # handler for logout
 class LogoutHandler(Handler):
