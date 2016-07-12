@@ -1,6 +1,6 @@
 <div class="row post-heading">
     <div class="col-md-8">
-        <h4><a href="blog/{{post.key().id()}}">{{post.subject}}</a></h4>
+        <h4><a href="/blog/{{post.key().id()}}">{{post.subject}}</a></h4>
     </div>
     <div class="col-md-4 text-right">
         <div class="post-datetime">{{post.created.strftime("%b %d, %Y")}}</div>
@@ -11,6 +11,6 @@
     <pre class="post-content">{{post.content}}</pre>
 </div>
 <div class="row">
-    <a class="btn btn-default" href="blog/{{post.key().id()}}/delete">Delete</a>
-    <a class="btn btn-default" href="blog/{{post.key().id()}}/edit">Edit</a>
+    <a class="btn btn-default" href="/blog/{{post.key().id()}}/delete">Delete</a>
+    <a class="btn btn-default" href="/blog/{{post.key().id()}}/edit">Edit</a>
 </div>

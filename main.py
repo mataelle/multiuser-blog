@@ -105,6 +105,8 @@ class Handler(webapp2.RequestHandler):
     def initialize(self, *a, **kw):
         webapp2.RequestHandler.initialize(self, *a, **kw)
         username = self.read_cookie('username')
+        if len(username) == 0:
+            username = None
         self.user = username and User.get_by_username(username)
 
     def render_str(self, template, **params):
@@ -149,11 +151,87 @@ class PostPage(Handler):
         post = db.get(key)
 
         if not post:
-            self.error(404)
+            self.render('page_not_found.html')
             return
 
         self.render('post_permalink.html', post=post)
 
+
+# handler for edit post page
+class EditPostPage(Handler):
+
+    def get(self, post_id):
+        key = db.Key.from_path('Post', int(post_id))
+        post = db.get(key)
+
+        if not post:
+            self.render('page_not_found.html')
+            return
+
+        if not post.author or not self.user or \
+            post.author.username != self.user.username:
+            self.render('page_not_allowed.html')
+            return
+
+        self.render('post_edit.html', subject=post.subject, content=post.content)
+
+    def post(self, post_id):
+        key = db.Key.from_path('Post', int(post_id))
+        post = db.get(key)
+
+        if not post:
+            self.render('page_not_found.html')
+            return
+
+        if not post.author or not self.user or \
+            post.author.username != self.user.username:
+            self.render('page_not_allowed.html')
+            return
+
+        subject = self.request.get('subject')
+        content = self.request.get('content')
+        if subject and content:
+            post.subject = subject
+            post.content = content
+            post.put()
+            self.redirect('/blog/'+str(post.key().id()))
+        else:
+            self.render('post_edit.html', subject=subject, content=content, err_msg=True)
+
+
+# handler for delete post page
+class DeletePostPage(Handler):
+
+    def get(self, post_id):
+        key = db.Key.from_path('Post', int(post_id))
+        post = db.get(key)
+
+        if not post:
+            self.render('page_not_found.html')
+            return
+
+        if not post.author or not self.user or \
+            post.author.username != self.user.username:
+            self.render('page_not_allowed.html')
+            return
+
+        self.render('post_delete.html', post=post)
+
+    def post(self, post_id):
+        key = db.Key.from_path('Post', int(post_id))
+        post = db.get(key)
+
+        if not post:
+            self.render('page_not_found.html')
+            return
+
+        if not post.author or not self.user or \
+            post.author.username != self.user.username:
+            self.render('page_not_allowed.html')
+            return
+
+        post.delete()
+        self.redirect('/blog')
 
 # handler for new post form page
 class NewPost(Handler):
@@ -173,7 +251,7 @@ class NewPost(Handler):
         if subject and content:
             post = Post(subject=subject, content=content, author=self.user)
             post.put()
-            self.redirect(str(post.key().id()))
+            self.redirect('/blog/'+str(post.key().id()))
         else:
             self.render('newpost.html', content=content,
                         subject=subject, err_msg=True)
@@ -268,6 +346,8 @@ app = webapp2.WSGIApplication([
     ('/', BlogFront),
     ('/blog/?', BlogFront),
     ('/blog/([0-9]+)', PostPage),
+    ('/blog/([0-9]+)/delete', DeletePostPage),
+    ('/blog/([0-9]+)/edit', EditPostPage),
     ('/blog/newpost', NewPost),
     ('/signup', SignUpHandler),
     ('/login', LoginHandler),
