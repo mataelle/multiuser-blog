@@ -1,17 +1,27 @@
-body {
-    min-width: 768px;
-    background-color: rgba(0,188,212,0.2) !important;
+html {
+  background: url(/img/skyline-buildings-new-york-skyscrapers-big.jpg) no-repeat center center fixed;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
 }
 
-nav {
+body {
+    min-width: 768px;
+    background-color: transparent !important;
+    padding-bottom: 20px;
+}
+
+.nav {
     margin-bottom: 0 !important;
 }
 
-.navbar-default, pre{
-    background-color: rgba(248,248,248,0.5) !important;
+pre {
+    background-color: rgba(248,248,248,0.7) !important;
 }
 
 .container {
+    margin-top: 50px;
     min-width: 750px;
 }
 
