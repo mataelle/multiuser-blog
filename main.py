@@ -135,6 +135,7 @@ class Handler(webapp2.RequestHandler):
         self.user=None
         self.set_cookie('username', '')
 
+
 # handler for front page
 class BlogFront(Handler):
 
@@ -143,49 +144,49 @@ class BlogFront(Handler):
         self.render('blog.html', posts=posts)
 
 
+# base handler for post-pages
+class PostHandler(Handler):
+    def get_post(self, key):
+        post = db.get(key)
+        if post:
+            return post
+        self.render('page_not_found.html')
+
+    def check_post_author(self, post):
+        if not post.author or not self.user or \
+            post.author.username != self.user.username:
+            self.render('page_not_allowed.html')
+            return False
+        return True
+
+
 # handler for post page
-class PostPage(Handler):
+class PostPage(PostHandler):
 
     def get(self, post_id):
         key = db.Key.from_path('Post', int(post_id))
-        post = db.get(key)
-
+        post = self.get_post(key)
         if not post:
-            self.render('page_not_found.html')
             return
 
         self.render('post_permalink.html', post=post)
 
 
 # handler for edit post page
-class EditPostPage(Handler):
+class EditPostPage(PostHandler):
 
     def get(self, post_id):
         key = db.Key.from_path('Post', int(post_id))
-        post = db.get(key)
-
-        if not post:
-            self.render('page_not_found.html')
-            return
-
-        if not post.author or not self.user or \
-            post.author.username != self.user.username:
-            self.render('page_not_allowed.html')
+        post = self.get_post(key)
+        if not post or not self.check_post_author(post):
             return
 
         self.render('post_edit.html', subject=post.subject, content=post.content)
 
     def post(self, post_id):
         key = db.Key.from_path('Post', int(post_id))
-        post = db.get(key)
-
-        if not post:
-            self.render('page_not_found.html')
-            return
-
-        if not post.author or not self.user or \
-            post.author.username != self.user.username:
-            self.render('page_not_allowed.html')
+        post = self.get_post(key)
+        if not post or not self.check_post_author(post):
             return
 
         subject = self.request.get('subject')
@@ -200,41 +201,27 @@ class EditPostPage(Handler):
 
 
 # handler for delete post page
-class DeletePostPage(Handler):
+class DeletePostPage(PostHandler):
 
     def get(self, post_id):
         key = db.Key.from_path('Post', int(post_id))
-        post = db.get(key)
-
-        if not post:
-            self.render('page_not_found.html')
-            return
-
-        if not post.author or not self.user or \
-            post.author.username != self.user.username:
-            self.render('page_not_allowed.html')
+        post = self.get_post(key)
+        if not post or not self.check_post_author(post):
             return
 
         self.render('post_delete.html', post=post)
 
     def post(self, post_id):
         key = db.Key.from_path('Post', int(post_id))
-        post = db.get(key)
-
-        if not post:
-            self.render('page_not_found.html')
-            return
-
-        if not post.author or not self.user or \
-            post.author.username != self.user.username:
-            self.render('page_not_allowed.html')
+        post = self.get_post(key)
+        if not post or not self.check_post_author(post):
             return
 
         post.delete()
         self.redirect('/blog')
 
 # handler for new post form page
-class NewPost(Handler):
+class NewPost(PostHandler):
 
     def get(self):
         if not self.user:
