@@ -17,11 +17,45 @@
 import webapp2
 import jinja2
 import os
+import random
+import hmac
+import hashlib
 
 templates_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(
     loader=jinja2.FileSystemLoader(templates_dir), autoescape=True)
 
+###### functions providing cookie security
+secret = "kinda very secret string"
+
+def make_secure_val(val):
+    return '%s|%s' % (val, hmac.new(secret, val).hexdigest())
+
+def check_secure_val(secure_val):
+    val = secure_val.split('|')[0]
+    if secure_val == make_secure_val(val):
+        return val
+
+###### functions providing password security
+from string import letters
+def make_salt(length = 5):
+    return ''.join(random.choice(letters) for x in xrange(length))
+
+def make_pw_hash(name, pw, salt = None):
+    if not salt:
+        salt = make_salt()
+    h = hashlib.sha256(name + pw + salt).hexdigest()
+    return '%s,%s' % (salt, h)
+
+def valid_pw(name, password, h):
+    salt = h.split(',')[0]
+    return h == make_pw_hash(name, password, salt)
+
+def users_key(group = 'default'):
+    return db.Key.from_path('users', group)
+
+
+###### database models
 from google.appengine.ext import db
 
 def render_str(template, **params):
@@ -29,17 +63,18 @@ def render_str(template, **params):
     return t.render(params)
 
 class Post(db.Model):
-    subject = db.StringProperty(required=True)
-    content = db.TextProperty(required=True)
-    created = db.DateTimeProperty(auto_now_add=True)
-    last_modified = db.DateTimeProperty(auto_now=True)
+    subject = db.StringProperty(required = True)
+    content = db.TextProperty(required = True)
+    created = db.DateTimeProperty(auto_now_add = True)
+    last_modified = db.DateTimeProperty(auto_now = True)
 
     def render(self):
         return render_str("post.html", post = self)
 
 class User(db.Model):
-    username = db.StringProperty(required=True)
-    password = db.StringProperty(required=True)
+    username = db.StringProperty(required = True)
+    pw_hash = db.StringProperty(required = True)
+    email = db.StringProperty(required = False)
 
     @classmethod
     def get_by_username(cls, username):
@@ -47,18 +82,23 @@ class User(db.Model):
         return u
 
     @classmethod
-    def login(self, username, password):
+    def register(cls, username, password, email = None):
+        pw_hash = make_pw_hash(username, password)
+        return cls(username = username,
+                    pw_hash = pw_hash,
+                    email = email)
+
+    @classmethod
+    def login(cls, username, password):
         if username is None or password is None:
             return None
-        user = db.GqlQuery('select * from User where username=:1', username)
-        if user.count() == 0:
-            return None
-        user = user.get()
-        if user.password != password:
-            return None
-        return user
+        user = cls.get_by_username(username)
+        if user and valid_pw(username, password, user.pw_hash):
+            return user
+        return None
 
 
+###### blog handlers
 # basic handler class
 class Handler(webapp2.RequestHandler):
 
@@ -77,12 +117,13 @@ class Handler(webapp2.RequestHandler):
         self.response.write(self.render_str(template, **kw))
 
     def set_cookie(self, name, value):
+        secure_val = make_secure_val(value)
         self.response.headers.add_header(
-            'Set-Cookie', '%s=%s; Path=/' % (name, value))
+            'Set-Cookie', '%s=%s; Path=/' % (name, secure_val))
 
     def read_cookie(self, name):
         cookie_val = self.request.cookies.get(name)
-        return cookie_val
+        return cookie_val and check_secure_val(cookie_val)
 
     def set_user(self, user):
         self.user=user
@@ -132,7 +173,7 @@ class NewPost(Handler):
                         subject=subject, err_msg=True)
 
 
-# username, email, password validators
+###### username, email, password validators
 import re
 
 USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
@@ -157,6 +198,7 @@ def match_password(password, verify):
     return password == verify
 
 
+###### handlers for user stuff
 # handler for sign up form
 class SignUpHandler(Handler):
 
@@ -184,7 +226,7 @@ class SignUpHandler(Handler):
                 self.render('signup.html', username=username, email=email,
                             err_username_taken=True)
             else:
-                user = User(username=username, password=password)
+                user = User.register(username=username, password=password, email=email)
                 user.put()
                 self.set_user(user)
                 self.redirect('/blog')
