@@ -62,15 +62,6 @@ def render_str(template, **params):
     t = jinja_env.get_template(template)
     return t.render(params)
 
-class Post(db.Model):
-    subject = db.StringProperty(required = True)
-    content = db.TextProperty(required = True)
-    created = db.DateTimeProperty(auto_now_add = True)
-    last_modified = db.DateTimeProperty(auto_now = True)
-
-    def render(self):
-        return render_str("post.html", post = self)
-
 class User(db.Model):
     username = db.StringProperty(required = True)
     pw_hash = db.StringProperty(required = True)
@@ -97,6 +88,15 @@ class User(db.Model):
             return user
         return None
 
+class Post(db.Model):
+    subject = db.StringProperty(required = True)
+    content = db.TextProperty(required = True)
+    created = db.DateTimeProperty(auto_now_add = True)
+    last_modified = db.DateTimeProperty(auto_now = True)
+    author = db.ReferenceProperty(User)
+
+    def render(self):
+        return render_str("post.html", post = self)
 
 ###### blog handlers
 # basic handler class
@@ -159,13 +159,19 @@ class PostPage(Handler):
 class NewPost(Handler):
 
     def get(self):
+        if not self.user:
+            self.redirect('/login')
+
         self.render('newpost.html')
 
     def post(self):
+        if not self.user:
+            self.redirect('/login')
+
         subject = self.request.get('subject')
         content = self.request.get('content')
         if subject and content:
-            post = Post(subject=subject, content=content)
+            post = Post(subject=subject, content=content, author=self.user)
             post.put()
             self.redirect(str(post.key().id()))
         else:
