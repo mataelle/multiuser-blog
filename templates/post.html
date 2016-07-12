@@ -11,6 +11,6 @@
     <pre class="post-content">{{post.content}}</pre>
 </div>
 <div class="row">
-    <a class="btn btn-default" href="/blog/{{post.key().id()}}/delete">Delete</a>
-    <a class="btn btn-default" href="/blog/{{post.key().id()}}/edit">Edit</a>
+    <a class="btn btn-default {% if post.author.username != user.username %}not-allowed{% endif %}" href="/blog/{{post.key().id()}}/delete">Delete</a>
+    <a class="btn btn-default {% if post.author.username != user.username %}not-allowed{% endif %}" href="/blog/{{post.key().id()}}/edit">Edit</a>
 </div>

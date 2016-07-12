@@ -95,8 +95,8 @@ class Post(db.Model):
     last_modified = db.DateTimeProperty(auto_now = True)
     author = db.ReferenceProperty(User)
 
-    def render(self):
-        return render_str("post.html", post = self)
+    def render(self, user = None):
+        return render_str("post.html", post = self, user = user)
 
 ###### blog handlers
 # basic handler class
@@ -111,6 +111,7 @@ class Handler(webapp2.RequestHandler):
 
     def render_str(self, template, **params):
         t = jinja_env.get_template(template)
+        print("!!", self.user)
         if self.user:
             params['user'] = self.user
         return t.render(params)

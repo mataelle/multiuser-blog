@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
 	{% for post in posts %}
-        {{post.render() | safe}}
+        {{post.render(user) | safe}}
 	{% endfor %}
 {% endblock %}

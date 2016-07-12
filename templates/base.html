@@ -2,7 +2,9 @@
 <head>
 	<link rel="stylesheet" href="/css/styles.css">
 	<link rel="stylesheet" href="/css/bootstrap.css">
-	<title>MultiUser Blog</title>
+    <script type="text/javascript" src="/js/jquery-2.2.0.js"></script>
+    <script type="text/javascript" src="/js/bootstrap.js"></script>
+    <title>MultiUser Blog</title>
 </head>
 <body>
 
@@ -38,5 +40,37 @@
 	{% block content %}
 	{% endblock %}
 	</div>
+
+	<!-- modal -->
+
+     <div class="modal fade" id="not-allowed" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="myModalLabel">You can't do that</h4>
+                </div>
+                <div class="modal-body">
+					You are not the author of this post, so you can't change or delete it.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal" id="close-modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+ <script>
+ $(document).ready(function(){
+ 	$('.not-allowed').on('click', function(e){
+ 		e.preventDefault();
+ 		$('#not-allowed').toggleClass('fade');
+ 		$('#not-allowed').css('display', $('#not-allowed').css('display') == 'block' ? 'none' : 'block');
+ 	});
+ 	$('#close-modal').on('click', function(e) {
+ 		$('#not-allowed').toggleClass('fade');
+ 		$('#not-allowed').css('display', $('#not-allowed').css('display') == 'block' ? 'none' : 'block');
+ 	});
+ });
+ </script>
 </body>
 </html>
