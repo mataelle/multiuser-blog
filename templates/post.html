@@ -11,6 +11,10 @@
     <pre class="post-content">{{post.content}}</pre>
 </div>
 <div class="row">
-    <a class="btn btn-default {% if post.author.username != user.username %}not-allowed{% endif %}" href="/blog/{{post.key().id()}}/delete">Delete</a>
-    <a class="btn btn-default {% if post.author.username != user.username %}not-allowed{% endif %}" href="/blog/{{post.key().id()}}/edit">Edit</a>
+    <div class="col-md-6">
+        <a class="btn btn-default {% if user and post.author.username != user.username %}not-allowed{% endif %}" href="{% if not user %}/login{% else %}/blog/{{post.key().id()}}/delete{% endif %}">Delete</a>
+        <a class="btn btn-default {% if user and post.author.username != user.username %}not-allowed{% endif %}" href="{% if not user %}/login{% else %}/blog/{{post.key().id()}}/edit{% endif %}">Edit</a>
+        <a class="btn btn-default {% if user and post.author.username == user.username %}not-allowed-like{% endif %}" href="{% if not user %}/login{% else %}javascript:Like('{{post.key().id()}}'){% endif %}">Like</a>
+    </div>
+    <!-- comments will be here -->
 </div>

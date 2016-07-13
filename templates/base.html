@@ -59,6 +59,22 @@
         </div>
     </div>
 
+     <div class="modal fade" id="not-allowed-like" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="myModalLabel">You can't do that</h4>
+                </div>
+                <div class="modal-body">
+                	You can't like your own posts.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal" id="close-modal-like">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
  <script>
  $(document).ready(function(){
  	$('.not-allowed').on('click', function(e){
@@ -70,7 +86,36 @@
  		$('#not-allowed').toggleClass('fade');
  		$('#not-allowed').css('display', $('#not-allowed').css('display') == 'block' ? 'none' : 'block');
  	});
+
+ 	$('.not-allowed-like').on('click', function(e){
+ 		e.preventDefault();
+ 		$('#not-allowed-like').toggleClass('fade');
+ 		$('#not-allowed-like').css('display', $('#not-allowed-like').css('display') == 'block' ? 'none' : 'block');
+ 	});
+ 	$('#close-modal-like').on('click', function(e) {
+ 		$('#not-allowed-like').toggleClass('fade');
+ 		$('#not-allowed-like').css('display', $('#not-allowed-like').css('display') == 'block' ? 'none' : 'block');
+ 	});
+
  });
+
+ function Like(post_id){
+	var call = (function(object) { return function() {
+		$.ajax({
+		    url: '/blog/' + post_id + '/like',
+		    type: 'POST',
+		    data: { 'post_id' : post_id },
+		    success: function (data) {
+		    	console.log("that's good");
+		    	$(object).text('Liked');
+		    },
+		    error: function (data) {
+		    	console.log("something went wrong...");
+			},
+        });
+    };})($(this));
+    call();
+ }
  </script>
 </body>
 </html>

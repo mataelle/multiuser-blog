@@ -95,8 +95,30 @@ class Post(db.Model):
     last_modified = db.DateTimeProperty(auto_now = True)
     author = db.ReferenceProperty(User)
 
+    # @classmethod
+    # def comments(cls):
+    #     db.GqlQuery('select * from Comment where post=:1 order by created desc', self)
+
     def render(self, user = None):
         return render_str("post.html", post = self, user = user)
+
+class Like(db.Model):
+    user = db.ReferenceProperty(User)
+    post = db.ReferenceProperty(Post)
+    created = db.DateTimeProperty(auto_now_add = True)
+
+    @classmethod
+    def like(cls, user, post):
+        return cls(user = user, post = post)
+
+class Comment(db.Model):
+    user = db.ReferenceProperty(User)
+    post = db.ReferenceProperty(Post)
+    comment = db.TextProperty(required=True)
+    created = db.DateTimeProperty(auto_now_add = True)
+    last_modified = db.DateTimeProperty(auto_now = True)
+
+
 
 ###### blog handlers
 # basic handler class
@@ -111,8 +133,7 @@ class Handler(webapp2.RequestHandler):
 
     def render_str(self, template, **params):
         t = jinja_env.get_template(template)
-        if self.user:
-            params['user'] = self.user
+        params['user'] = self.user if self.user else None
         return t.render(params)
 
     def render(self, template, **kw):
@@ -243,6 +264,19 @@ class NewPost(PostHandler):
             self.render('newpost.html', content=content,
                         subject=subject, err_msg=True)
 
+import json
+# like post page
+class LikePost(PostHandler):
+
+    def post(self, post_id):
+        key = db.Key.from_path('Post', int(post_id))
+        post = self.get_post(key)
+        if post and self.user.username != post.author.username:
+            post_like_set = Post.get_by_id(int(post_id)).like_set
+            if all ([like.user.key().id() != self.user.key().id() for like in post_like_set]):
+                like = Like(user = self.user, post = post)
+                like.put()
+                self.response.out.write(json.dumps(({})))
 
 ###### username, email, password validators
 import re
@@ -318,7 +352,7 @@ class LoginHandler(Handler):
             return
 
         self.set_user(user)
-        self.redirect('/blog', username, permanent=True)
+        self.redirect('/blog', permanent=True)
 
 # handler for logout
 class LogoutHandler(Handler):
@@ -333,6 +367,7 @@ app = webapp2.WSGIApplication([
     ('/blog/([0-9]+)', PostPage),
     ('/blog/([0-9]+)/delete', DeletePostPage),
     ('/blog/([0-9]+)/edit', EditPostPage),
+    ('/blog/([0-9]+)/like', LikePost),
     ('/blog/newpost', NewPost),
     ('/signup', SignUpHandler),
     ('/login', LoginHandler),
