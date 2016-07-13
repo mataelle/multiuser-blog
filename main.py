@@ -99,6 +99,10 @@ class Post(db.Model):
     # def comments(cls):
     #     db.GqlQuery('select * from Comment where post=:1 order by created desc', self)
 
+    def liked(self, user):
+        print(dir(self.like_set))
+        return any([like.user.key().id() == user.key().id() for like in self.like_set])
+
     def render(self, user = None):
         return render_str("post.html", post = self, user = user)
 
@@ -271,12 +275,11 @@ class LikePost(PostHandler):
     def post(self, post_id):
         key = db.Key.from_path('Post', int(post_id))
         post = self.get_post(key)
-        if post and self.user.username != post.author.username:
-            post_like_set = Post.get_by_id(int(post_id)).like_set
-            if all ([like.user.key().id() != self.user.key().id() for like in post_like_set]):
-                like = Like(user = self.user, post = post)
-                like.put()
-                self.response.out.write(json.dumps(({})))
+        if post and self.user.username != post.author.username and\
+            not post.liked(self.user):
+            like = Like(user = self.user, post = post)
+            like.put()
+            self.response.out.write(json.dumps(({})))
 
 ###### username, email, password validators
 import re

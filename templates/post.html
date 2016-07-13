@@ -14,7 +14,7 @@
     <div class="col-md-6">
         <a class="btn btn-default {% if user and post.author.username != user.username %}not-allowed{% endif %}" href="{% if not user %}/login{% else %}/blog/{{post.key().id()}}/delete{% endif %}">Delete</a>
         <a class="btn btn-default {% if user and post.author.username != user.username %}not-allowed{% endif %}" href="{% if not user %}/login{% else %}/blog/{{post.key().id()}}/edit{% endif %}">Edit</a>
-        <a class="btn btn-default {% if user and post.author.username == user.username %}not-allowed-like{% endif %}" href="{% if not user %}/login{% else %}javascript:Like('{{post.key().id()}}'){% endif %}">Like</a>
+        <a class="btn btn-default {% if user and post.author.username == user.username %}not-allowed-like{% endif %}" {% if not user %}href="/login"{% else %}onclick="Like(this, '{{post.key().id()}}')"{% endif %}>{% if post.liked(user) %}Liked{% else %}Like{% endif %}</a>
     </div>
     <!-- comments will be here -->
 </div>

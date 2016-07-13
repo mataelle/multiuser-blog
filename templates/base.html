@@ -99,22 +99,19 @@
 
  });
 
- function Like(post_id){
-	var call = (function(object) { return function() {
-		$.ajax({
-		    url: '/blog/' + post_id + '/like',
-		    type: 'POST',
-		    data: { 'post_id' : post_id },
-		    success: function (data) {
-		    	console.log("that's good");
-		    	$(object).text('Liked');
-		    },
-		    error: function (data) {
-		    	console.log("something went wrong...");
-			},
-        });
-    };})($(this));
-    call();
+ function Like(object, post_id){
+	$.ajax({
+	    url: '/blog/' + post_id + '/like',
+	    type: 'POST',
+	    data: { 'post_id' : post_id },
+	    success: function (data) {
+	    	console.log("that's good");
+	    	$(object).text('Liked');
+	    },
+	    error: function (data) {
+	    	console.log("something went wrong...");
+		},
+    });
  }
  </script>
 </body>
