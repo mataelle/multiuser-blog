@@ -1,20 +1,42 @@
 <div class="row post-heading">
     <div class="col-md-8">
-        <h4><a href="/blog/{{post.key().id()}}">{{post.subject}}</a></h4>
+        <h4><a href="/blog/{{ post.key().id() }}">{{ post.subject }}</a></h4>
     </div>
     <div class="col-md-4 text-right">
-        <div class="post-datetime">{{post.created.strftime("%b %d, %Y")}}</div>
-        <div class="post-author"><b>by {{post.author.username}}</b></div>
+        <div class="post-datetime">{{ post.created.strftime("%b %d, %Y") }}</div>
+        <div class="post-author"><b>by {{ post.author.username }}</b></div>
     </div>
 </div>
 <div class="row">
-    <pre class="post-content">{{post.content}}</pre>
+    <pre class="post-content">{{ post.content }}</pre>
 </div>
 <div class="row">
     <div class="col-md-6">
-        <a class="btn btn-default {% if user and post.author.username != user.username %}not-allowed{% endif %}" href="{% if not user %}/login{% else %}/blog/{{post.key().id()}}/delete{% endif %}">Delete</a>
-        <a class="btn btn-default {% if user and post.author.username != user.username %}not-allowed{% endif %}" href="{% if not user %}/login{% else %}/blog/{{post.key().id()}}/edit{% endif %}">Edit</a>
-        <a class="btn btn-default {% if user and post.author.username == user.username %}not-allowed-like{% endif %}" {% if not user %}href="/login"{% else %}onclick="Like(this, '{{post.key().id()}}')"{% endif %}>{% if post.liked(user) %}Liked{% else %}Like{% endif %}</a>
+        <a class="btn btn-default {% if user and post.author.username != user.username %}not-allowed{% endif %}" href="{% if not user %}/login{% else %}/blog/{{ post.key().id() }}/delete{% endif %}">Delete</a>
+        <a class="btn btn-default {% if user and post.author.username != user.username %}not-allowed{% endif %}" href="{% if not user %}/login{% else %}/blog/{{ post.key().id() }}/edit{% endif %}">Edit</a>
+        <a class="btn btn-default {% if user and post.author.username == user.username %}not-allowed-like{% endif %}" {% if not user %}href="/login"{% else %}onclick="Like(this, '{{ post.key().id() }}')"{% endif %}>{% if user and post.liked(user) %}Liked{% else %}Like{% endif %}</a>
     </div>
-    <!-- comments will be here -->
-</div>
+    <div class="col-md-6">
+    {% for comment in post.comment_set.order('created') %}
+        {{ comment.render(user) | safe }}
+    {% endfor %}
+    {% if user %}
+        <hr></hr>
+        <form class="form-horizontal post-comment-form" method="post">
+            <div class="form-group">
+                <div class="col-sm-10">
+                  <textarea class="form-control comment-textarea" name="comment" placeholder="Write your comment here"></textarea>
+                </div>
+            </div>
+            <div class="form-group err_msg">
+                <div class="col-sm-10"> Comment can't be empty </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-10">
+                    <div class="btn btn-default" onclick="addComment(this, '{{ post.key().id() }}')">Post</div>
+                </div>
+            </div>
+          </form>
+    {% endif %}
+        </div>
+    </div>

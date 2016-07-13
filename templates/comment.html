@@ -1,6 +1,11 @@
-<div class="col-md-6">
-    <div><b>{{comment.user.username}}</b></div>
-    <pre>
-        {{comment.comment}}
-    </pre>
+<div class="comment" id="comment-{{ comment.key().id() }}">
+    <div class="comment-body">
+        <div class="comment-author"><b>{{ comment.user.username }}</b></div>
+        <pre>{{ comment.comment }}</pre>
+        {% if user and user.key().id() == comment.user.key().id() %}
+            <button class="btn btn-default" onclick="deleteComment(this, '{{ comment.key().id() }}')">Delete</button>
+            <button class="btn btn-default" onclick="openEditCommentForm(this)">Edit</button>
+        {% endif %}
+    </div>
+    {{ comment.render_form() | safe }}
 </div>

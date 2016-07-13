@@ -19,6 +19,18 @@ textarea {
   min-height:200px;
 }
 
+.comment, .comment-form {
+  padding-top: 20px;
+}
+
+.comment-textarea {
+  min-height: 100px;
+}
+
+.comment-form, .comment-form .err_msg, .post-comment-form .err_msg {
+  display:none;
+}
+
 .nav {
   margin-bottom: 0 !important;
 }

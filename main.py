@@ -95,13 +95,9 @@ class Post(db.Model):
     last_modified = db.DateTimeProperty(auto_now = True)
     author = db.ReferenceProperty(User)
 
-    # @classmethod
-    # def comments(cls):
-    #     db.GqlQuery('select * from Comment where post=:1 order by created desc', self)
-
     def liked(self, user):
-        print(dir(self.like_set))
-        return any([like.user.key().id() == user.key().id() for like in self.like_set])
+        return any([like.user.key().id() == user.key().id()
+                    for like in self.like_set])
 
     def render(self, user = None):
         return render_str("post.html", post = self, user = user)
@@ -111,10 +107,6 @@ class Like(db.Model):
     post = db.ReferenceProperty(Post)
     created = db.DateTimeProperty(auto_now_add = True)
 
-    @classmethod
-    def like(cls, user, post):
-        return cls(user = user, post = post)
-
 class Comment(db.Model):
     user = db.ReferenceProperty(User)
     post = db.ReferenceProperty(Post)
@@ -122,6 +114,11 @@ class Comment(db.Model):
     created = db.DateTimeProperty(auto_now_add = True)
     last_modified = db.DateTimeProperty(auto_now = True)
 
+    def render(self, user = None):
+        return render_str("comment.html", comment = self, user = user)
+
+    def render_form(self):
+        return render_str("newcomment.html", comment = self)
 
 
 ###### blog handlers
@@ -206,7 +203,9 @@ class EditPostPage(PostHandler):
         if not post or not self.check_post_author(post):
             return
 
-        self.render('post_edit.html', subject=post.subject, content=post.content)
+        self.render('post_edit.html',
+                    subject=post.subject,
+                    content=post.content)
 
     def post(self, post_id):
         key = db.Key.from_path('Post', int(post_id))
@@ -222,7 +221,10 @@ class EditPostPage(PostHandler):
             post.put()
             self.redirect('/blog/'+str(post.key().id()))
         else:
-            self.render('post_edit.html', subject=subject, content=content, err_msg=True)
+            self.render('post_edit.html',
+                        subject=subject,
+                        content=content,
+                        err_msg=True)
 
 
 # handler for delete post page
@@ -242,6 +244,8 @@ class DeletePostPage(PostHandler):
         if not post or not self.check_post_author(post):
             return
 
+        for comment in post.comment_set:
+            comment.delete()
         post.delete()
         self.redirect('/blog')
 
@@ -261,7 +265,9 @@ class NewPost(PostHandler):
         subject = self.request.get('subject')
         content = self.request.get('content')
         if subject and content:
-            post = Post(subject=subject, content=content, author=self.user)
+            post = Post(subject=subject,
+                        content=content,
+                        author=self.user)
             post.put()
             self.redirect('/blog/'+str(post.key().id()))
         else:
@@ -269,7 +275,7 @@ class NewPost(PostHandler):
                         subject=subject, err_msg=True)
 
 import json
-# like post page
+# like post
 class LikePost(PostHandler):
 
     def post(self, post_id):
@@ -279,7 +285,54 @@ class LikePost(PostHandler):
             not post.liked(self.user):
             like = Like(user = self.user, post = post)
             like.put()
-            self.response.out.write(json.dumps(({})))
+            self.response.out.write(json.dumps({}))
+
+# comment post
+class CommentPost(PostHandler):
+
+    def post(self, post_id):
+        comment_text = self.request.get('comment')
+        if not comment_text:
+            self.response.out.write(json.dumps({'err_msg': True}))
+            return
+
+        key = db.Key.from_path('Post', int(post_id))
+        post = self.get_post(key)
+        comment = Comment(user = self.user,
+                          post = post,
+                          comment = comment_text)
+        comment.put()
+        self.response.out.write(comment.render(self.user))
+
+class CommentDelete(Handler):
+
+    def post(self, comment_id):
+        comment = Comment.get_by_id(int(comment_id))
+        if not comment or \
+            comment.user.key().id() != self.user.key().id():
+            self.response.out.write(json.dumps(({'err_msg_critical': True})))
+            return
+        comment.delete()
+        self.response.out.write(json.dumps({}))
+
+class CommentEdit(Handler):
+
+    def post(self, comment_id):
+        comment = Comment.get_by_id(int(comment_id))
+        if not comment or \
+            comment.user.key().id() != self.user.key().id():
+            self.response.out.write(json.dumps(({'err_msg_critical': True})))
+            return
+
+        comment_text = self.request.get('comment')
+        if not comment_text or len(comment_text) == 0:
+            self.response.out.write(json.dumps(({'err_msg': True})))
+            return
+
+        comment.comment = comment_text
+        comment.put()
+        self.response.out.write(comment.render(self.user))
+
 
 ###### username, email, password validators
 import re
@@ -326,15 +379,24 @@ class SignUpHandler(Handler):
             if err_password is False else False
 
         if err_username or err_password or err_verify or err_email:
-            self.render('signup.html', username=username, email=email,
-                        err_username=err_username, err_password=err_password,
-                        err_verify=err_verify, err_email=err_email)
+            self.render('signup.html',
+                        username=username,
+                        email=email,
+                        err_username=err_username,
+                        err_password=err_password,
+                        err_verify=err_verify,
+                        err_email=err_email)
         else:
-            if db.GqlQuery('select * from User where username=:1', username).count() > 0:
-                self.render('signup.html', username=username, email=email,
+            if db.GqlQuery('select * from User where username=:1',
+                            username).count() > 0:
+                self.render('signup.html',
+                            username=username,
+                            email=email,
                             err_username_taken=True)
             else:
-                user = User.register(username=username, password=password, email=email)
+                user = User.register(username=username,
+                                    password=password,
+                                    email=email)
                 self.set_user(user)
                 user.put()
                 self.render('page_welcome.html')
@@ -371,6 +433,9 @@ app = webapp2.WSGIApplication([
     ('/blog/([0-9]+)/delete', DeletePostPage),
     ('/blog/([0-9]+)/edit', EditPostPage),
     ('/blog/([0-9]+)/like', LikePost),
+    ('/blog/([0-9]+)/comment', CommentPost),
+    ('/comment/([0-9]+)/delete', CommentDelete),
+    ('/comment/([0-9]+)/edit', CommentEdit),
     ('/blog/newpost', NewPost),
     ('/signup', SignUpHandler),
     ('/login', LoginHandler),
