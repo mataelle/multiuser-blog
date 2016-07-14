@@ -20,6 +20,7 @@ import os
 import random
 import hmac
 import hashlib
+import time
 
 templates_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(
@@ -324,6 +325,7 @@ class DeletePostPage(PostHandler):
         for comment in post.comment_set:
             comment.delete()
         post.delete()
+        time.sleep(1)
         self.redirect('/blog', permanent=True)
 
 
@@ -337,7 +339,7 @@ class NewPost(PostHandler):
 
     def post(self):
         if not self.user:
-            self.redirect('/login')
+            return self.redirect('/login')
 
         subject = self.request.get('subject')
         content = self.request.get('content')
