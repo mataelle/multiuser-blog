@@ -1,6 +1,10 @@
 from google.appengine.ext import db
 from settings import render_str
 
+from utils import (
+    make_secure_val, check_secure_val,
+    make_salt, make_pw_hash, valid_pw, secret)
+
 class User(db.Model):
     '''
     Model representing user.

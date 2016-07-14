@@ -15,42 +15,15 @@
 # limitations under the License.
 #
 import webapp2
-import random
-import hmac
-import hashlib
-import time
 from google.appengine.ext import db
+import time
 
 from settings import templates_dir, jinja_env, render_str
 from models import User, Post, Like, Comment
 
-
-###### functions providing cookie security
-secret = "kinda very secret string"
-
-def make_secure_val(val):
-    return '%s|%s' % (val, hmac.new(secret, val).hexdigest())
-
-def check_secure_val(secure_val):
-    val = secure_val.split('|')[0]
-    if secure_val == make_secure_val(val):
-        return val
-
-###### functions providing password security
-from string import letters
-def make_salt(length = 5):
-    return ''.join(random.choice(letters) for x in xrange(length))
-
-def make_pw_hash(name, pw, salt = None):
-    if not salt:
-        salt = make_salt()
-    h = hashlib.sha256(name + pw + salt).hexdigest()
-    return '%s,%s' % (salt, h)
-
-def valid_pw(name, password, h):
-    salt = h.split(',')[0]
-    return h == make_pw_hash(name, password, salt)
-
+from utils import (
+    make_secure_val, check_secure_val,
+    make_salt, make_pw_hash, valid_pw, secret)
 
 
 ###### blog handlers
